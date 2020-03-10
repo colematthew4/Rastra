@@ -1,0 +1,60 @@
+@startuml
+
+title "User creates a new score and adds a note/rest"
+
+actor User
+actor App
+
+User --> App : create new score
+
+create database Store
+App -> Store : new/clear score
+note left: sets default time/key signature and clef
+
+' create control ScoreRenderer
+' App <-> ScoreRenderer : new score renderer
+' App -> Store : register ScoreRenderer observer
+' Store -> App : observer registered
+
+create control VoiceRenderer
+App <-> VoiceRenderer : new voice renderer
+App -> Store : register VoiceRenderer observer
+Store -> App : observer registered
+
+create control MeasureRenderer
+App <-> MeasureRenderer : new measure renderer
+App -> Store : register MeasureRenderer observer
+Store -> App : observer registered
+
+App -> User : ready for input
+
+|||
+
+User -> App : Add note
+App -> Store : Adds note to end of voice
+Store -> Store : notify()
+
+alt new measure created
+    Store -> VoiceRenderer : notify of state update
+    VoiceRenderer -> Store : getState()
+    VoiceRenderer -> VoiceRenderer : calculate coordinates of new measure
+    create entity MeasureView
+    VoiceRenderer <-> MeasureView : create new measure view
+    loop for each measure
+        VoiceRenderer -> MeasureView : draw()
+    end
+    VoiceRenderer --> App
+    |||
+end
+
+Store -> MeasureRenderer : notify of state update
+MeasureRenderer -> Store : getState()
+MeasureRenderer -> MeasureRenderer : calculate coordinates of new note
+create entity NoteView
+MeasureRenderer <-> NoteView : create new note view
+loop for each note
+    MeasureRenderer -> NoteView : draw()
+end
+MeasureRenderer --> App
+
+@enduml
